@@ -101,5 +101,3 @@ export const CartProvider = ({ children }) => {
 };
 
 export const useCart = () => useContext(CartContext);
-
-// adding a comment to see if changes will be reflected by git hub

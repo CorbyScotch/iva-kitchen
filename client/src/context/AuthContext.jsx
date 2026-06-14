@@ -33,5 +33,3 @@ export const AuthProvider = ({ children }) => {
 
 // 3. Custom hook — shortcut to use this context anywhere
 export const useAuth = () => useContext(AuthContext);
-
-// adding a comment to see if changes will be reflected by git hub
