@@ -205,7 +205,7 @@ const WhyUs = () => {
     {
       icon: <Star size={28} className="text-orange-500" />,
       title: "Fresh Ingredients",
-      desc: "We source our ingredients fresh daily from local markets in Accra.",
+      desc: "We source our ingredients fresh daily from local markets.",
     },
     {
       icon: <Clock size={28} className="text-orange-500" />,
@@ -215,7 +215,7 @@ const WhyUs = () => {
     {
       icon: <Truck size={28} className="text-orange-500" />,
       title: "Easy Delivery",
-      desc: "Order online and we deliver straight to your door across Accra.",
+      desc: "Order online and we deliver straight to your door.",
     },
   ];
 
