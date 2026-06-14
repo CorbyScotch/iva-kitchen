@@ -149,7 +149,7 @@ const CheckoutPage = () => {
                       name="deliveryAddress"
                       value={formData.deliveryAddress}
                       onChange={handleChange}
-                      placeholder="e.g. 12 Labone Street, East Legon, Accra"
+                      placeholder="your delivery location"
                       rows={3}
                       className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
                     />
@@ -171,7 +171,7 @@ const CheckoutPage = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      placeholder="0244000001"
+                      placeholder="Your phone number"
                       className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400"
                     />
                   </div>
