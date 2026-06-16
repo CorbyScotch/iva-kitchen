@@ -7,7 +7,6 @@ import useTitle from "../hooks/useTitle";
 // ─── Single Cart Item Row ────────────────────────────────
 const CartItem = ({ item, onUpdate, onRemove }) => (
   <div className="flex items-center gap-4 py-4 border-b border-gray-100 last:border-0">
-    {/* Image */}
     <div className="bg-orange-50 rounded-xl h-16 w-16 flex items-center justify-center text-3xl shrink-0 overflow-hidden">
       {item.image ? (
         <img
@@ -20,13 +19,23 @@ const CartItem = ({ item, onUpdate, onRemove }) => (
       )}
     </div>
 
-    {/* Name + price */}
     <div className="flex-1 min-w-0">
-      <h3 className="font-semibold text-gray-800 truncate">{item.name}</h3>
+      <h3 className="font-semibold text-gray-800 truncate">
+        {item.name}
+        {/* Only show the label if it's not the generic "Regular" placeholder */}
+        {item.label && item.label !== "Regular" && (
+          <span className="text-gray-400 font-normal text-sm">
+            {" "}
+            ({item.label})
+          </span>
+        )}
+      </h3>
       <p className="text-orange-500 font-bold text-sm mt-0.5">
         GH₵ {item.price}
       </p>
     </div>
+
+    {/* ...rest stays exactly the same */}
 
     {/* Quantity controls */}
     <div className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5">
@@ -67,6 +76,7 @@ const CartItem = ({ item, onUpdate, onRemove }) => (
 const CartPage = () => {
   const { cartItems, cartTotal, updateItem, removeItem, emptyCart, loading } =
     useCart();
+  useTitle("My Cart");
 
   const handleUpdate = async (itemId, newQuantity) => {
     if (newQuantity < 1) return; // safety check
@@ -106,7 +116,6 @@ const CartPage = () => {
     );
   }
 
-  useTitle("My Cart");
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-4xl mx-auto px-4">
@@ -162,7 +171,11 @@ const CartPage = () => {
                     className="flex justify-between text-gray-600"
                   >
                     <span className="truncate mr-2">
-                      {item.name} x{item.quantity}
+                      {item.name}
+                      {item.label && item.label !== "Regular"
+                        ? ` (${item.label})`
+                        : ""}{" "}
+                      x{item.quantity}
                     </span>
                     <span className="font-medium whitespace-nowrap">
                       GH₵ {(item.price * item.quantity).toFixed(2)}

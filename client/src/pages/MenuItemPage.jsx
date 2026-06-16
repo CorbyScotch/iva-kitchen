@@ -5,15 +5,16 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { ShoppingCart, ArrowLeft, Plus, Minus } from "lucide-react";
 import toast from "react-hot-toast";
-import useTitle from "../hooks/useTitle";
 
 const MenuItemPage = () => {
-  const { id } = useParams(); // grabs the :id from the URL
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  // NEW — track which size/option the customer picked
+  const [selectedOption, setSelectedOption] = useState(null);
 
   const { addItem } = useCart();
   const { userInfo } = useAuth();
@@ -23,6 +24,8 @@ const MenuItemPage = () => {
       try {
         const { data } = await getMenuItem(id);
         setItem(data);
+        // Default to the first option once the item loads
+        setSelectedOption(data.options?.[0] || { label: "Regular", price: 0 });
       } catch (err) {
         toast.error("Item not found");
         navigate("/menu");
@@ -41,11 +44,14 @@ const MenuItemPage = () => {
     await addItem({
       menuItem: item._id,
       name: item.name,
-      price: item.price,
+      label: selectedOption.label,
+      price: selectedOption.price,
       image: item.image || "",
       quantity,
     });
-    toast.success(`${item.name} x${quantity} added to cart!`);
+    toast.success(
+      `${item.name} (${selectedOption.label}) x${quantity} added to cart!`,
+    );
   };
 
   if (loading) {
@@ -56,14 +62,13 @@ const MenuItemPage = () => {
     );
   }
 
-  if (!item) return null;
+  if (!item || !selectedOption) return null;
 
-  useTitle(item?.name || "Menu");
+  const hasMultipleOptions = item.options.length > 1;
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-3xl mx-auto px-4">
-        {/* Back button */}
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-gray-500 hover:text-orange-500 mb-6 transition-colors"
@@ -72,7 +77,6 @@ const MenuItemPage = () => {
         </button>
 
         <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
-          {/* Image */}
           <div className="bg-orange-50 h-64 flex items-center justify-center text-8xl overflow-hidden">
             {item.image ? (
               <img
@@ -85,11 +89,9 @@ const MenuItemPage = () => {
             )}
           </div>
 
-          {/* Details */}
           <div className="p-6">
             <div className="flex justify-between items-start gap-4">
               <div>
-                {/* Category badge */}
                 <span className="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full font-medium">
                   {item.category}
                 </span>
@@ -97,8 +99,9 @@ const MenuItemPage = () => {
                   {item.name}
                 </h1>
               </div>
+              {/* Price now reflects the SELECTED option, not a fixed price */}
               <span className="text-2xl font-extrabold text-orange-500 whitespace-nowrap">
-                GH₵ {item.price}
+                GH₵ {selectedOption.price}
               </span>
             </div>
 
@@ -106,17 +109,40 @@ const MenuItemPage = () => {
               {item.description}
             </p>
 
-            {/* Availability */}
             {!item.isAvailable && (
               <div className="mt-4 bg-red-50 text-red-500 px-4 py-3 rounded-xl text-sm font-medium">
                 This item is currently unavailable
               </div>
             )}
 
-            {/* Quantity selector + Add to cart */}
+            {/* ── Size selector — only show if there's more than one option ── */}
+            {item.isAvailable && hasMultipleOptions && (
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Choose a size
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {item.options.map((opt) => (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      onClick={() => setSelectedOption(opt)}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors
+                        ${
+                          selectedOption.label === opt.label
+                            ? "bg-orange-500 text-white border-orange-500"
+                            : "border-gray-200 text-gray-600 hover:border-orange-400"
+                        }`}
+                    >
+                      {opt.label} — GH₵ {opt.price}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {item.isAvailable && (
               <div className="mt-6 flex items-center gap-4">
-                {/* Quantity controls */}
                 <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-2">
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -135,13 +161,13 @@ const MenuItemPage = () => {
                   </button>
                 </div>
 
-                {/* Add to cart button */}
                 <button
                   onClick={handleAddToCart}
                   className="flex-1 bg-orange-500 text-white py-3 rounded-full font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
                 >
                   <ShoppingCart size={18} />
-                  Add to Cart — GH₵ {(item.price * quantity).toFixed(2)}
+                  Add to Cart — GH₵{" "}
+                  {(selectedOption.price * quantity).toFixed(2)}
                 </button>
               </div>
             )}

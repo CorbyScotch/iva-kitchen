@@ -5,7 +5,7 @@ import {
   updateMenuItem,
   deleteMenuItem,
 } from "../../services/menuService";
-import { Plus, Pencil, Trash2, X, Check } from "lucide-react";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 const CATEGORIES = [
@@ -20,33 +20,81 @@ const CATEGORIES = [
 // ─── Menu Item Form (used for both Add and Edit) ─────────
 const MenuItemForm = ({ initial, onSave, onCancel }) => {
   const [formData, setFormData] = useState(
-    initial || {
-      name: "",
-      description: "",
-      price: "",
-      category: "Local Dishes",
-      image: "",
-      isAvailable: true,
-      isFeatured: false,
-    },
+    initial
+      ? { ...initial }
+      : {
+          name: "",
+          description: "",
+          // Start with one empty option row by default
+          options: [{ label: "", price: "" }],
+          category: "Local Dishes",
+          image: "",
+          isAvailable: true,
+          isFeatured: false,
+        },
   );
   const [saving, setSaving] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    // Handle checkboxes differently — they use `checked` not `value`
     setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
+  };
+
+  // ── Handle changes inside a specific option row ──
+  const handleOptionChange = (index, field, value) => {
+    const updatedOptions = [...formData.options];
+    updatedOptions[index] = { ...updatedOptions[index], [field]: value };
+    setFormData({ ...formData, options: updatedOptions });
+  };
+
+  // ── Add a new empty option row ──
+  const addOptionRow = () => {
+    setFormData({
+      ...formData,
+      options: [...formData.options, { label: "", price: "" }],
+    });
+  };
+
+  // ── Remove an option row ──
+  const removeOptionRow = (index) => {
+    // Don't allow removing the last remaining option — every item needs at least one
+    if (formData.options.length === 1) {
+      toast.error("At least one price option is required");
+      return;
+    }
+    const updatedOptions = formData.options.filter((_, i) => i !== index);
+    setFormData({ ...formData, options: updatedOptions });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.description || !formData.price) {
+
+    if (!formData.name || !formData.description) {
       toast.error("Please fill in all required fields");
       return;
     }
+
+    // Validate every option has a price (label can be empty for single-price items)
+    const hasEmptyPrice = formData.options.some(
+      (opt) => opt.price === "" || opt.price === null,
+    );
+    if (hasEmptyPrice) {
+      toast.error("Please fill in a price for every option");
+      return;
+    }
+
+    // Convert prices to numbers before sending (inputs give strings)
+    const cleanedData = {
+      ...formData,
+      options: formData.options.map((opt) => ({
+        label: opt.label.trim() || "Regular", // default label if left blank
+        price: Number(opt.price),
+      })),
+    };
+
     try {
       setSaving(true);
-      await onSave(formData);
+      await onSave(cleanedData);
     } finally {
       setSaving(false);
     }
@@ -70,22 +118,6 @@ const MenuItemForm = ({ initial, onSave, onCancel }) => {
           />
         </div>
 
-        {/* Price */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Price (GH₵) *
-          </label>
-          <input
-            type="number"
-            name="price"
-            value={formData.price}
-            onChange={handleChange}
-            placeholder="e.g. 35"
-            min="0"
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm"
-          />
-        </div>
-
         {/* Category */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -104,22 +136,22 @@ const MenuItemForm = ({ initial, onSave, onCancel }) => {
             ))}
           </select>
         </div>
+      </div>
 
-        {/* Image URL */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Image URL{" "}
-            <span className="text-gray-400 font-normal">(optional)</span>
-          </label>
-          <input
-            type="text"
-            name="image"
-            value={formData.image}
-            onChange={handleChange}
-            placeholder="https://..."
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm"
-          />
-        </div>
+      {/* Image URL */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Image URL{" "}
+          <span className="text-gray-400 font-normal">(optional)</span>
+        </label>
+        <input
+          type="text"
+          name="image"
+          value={formData.image}
+          onChange={handleChange}
+          placeholder="https://..."
+          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm"
+        />
       </div>
 
       {/* Description */}
@@ -135,6 +167,62 @@ const MenuItemForm = ({ initial, onSave, onCancel }) => {
           rows={3}
           className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm resize-none"
         />
+      </div>
+
+      {/* ── Price Options ── */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Price Options *
+          </label>
+          <button
+            type="button"
+            onClick={addOptionRow}
+            className="flex items-center gap-1 text-orange-500 text-xs font-semibold hover:underline"
+          >
+            <Plus size={14} /> Add Size
+          </button>
+        </div>
+
+        <p className="text-xs text-gray-400 mb-3">
+          Leave label blank if the item has only one fixed price.
+        </p>
+
+        <div className="space-y-2">
+          {formData.options.map((opt, index) => (
+            <div key={index} className="flex items-center gap-2">
+              {/* Label input */}
+              <input
+                type="text"
+                placeholder="e.g. Small, Regular, Jumbo (optional)"
+                value={opt.label}
+                onChange={(e) =>
+                  handleOptionChange(index, "label", e.target.value)
+                }
+                className="flex-1 px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm"
+              />
+              {/* Price input */}
+              <input
+                type="number"
+                placeholder="Price"
+                value={opt.price}
+                onChange={(e) =>
+                  handleOptionChange(index, "price", e.target.value)
+                }
+                min="0"
+                className="w-24 px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm"
+              />
+              {/* Remove button */}
+              <button
+                type="button"
+                onClick={() => removeOptionRow(index)}
+                className="text-gray-400 hover:text-red-500 transition-colors p-1"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Checkboxes */}
@@ -181,6 +269,8 @@ const MenuItemForm = ({ initial, onSave, onCancel }) => {
     </form>
   );
 };
+
+// just update the item row display to show price range instead of single price:
 
 // ─── Main Admin Menu Page ────────────────────────────────
 const AdminMenuPage = () => {
@@ -350,7 +440,10 @@ const AdminMenuPage = () => {
                         )}
                       </div>
                       <p className="text-sm text-gray-500 truncate mt-0.5">
-                        {item.category} · GH₵ {item.price}
+                        {item.category} ·{" "}
+                        {item.options.length === 1
+                          ? `GH₵ ${item.options[0].price}`
+                          : `GH₵ ${Math.min(...item.options.map((o) => o.price))} - ${Math.max(...item.options.map((o) => o.price))}`}
                       </p>
                     </div>
 

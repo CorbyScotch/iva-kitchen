@@ -19,65 +19,90 @@ const CATEGORIES = [
 ];
 
 // ─── Single Menu Card ────────────────────────────────────
-const MenuCard = ({ item, onAddToCart }) => (
-  <div className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-    {/* Image */}
-    <div className="bg-orange-50 h-44 flex items-center justify-center text-6xl overflow-hidden">
-      {item.image ? (
-        <img
-          src={item.image}
-          alt={item.name}
-          className="w-full h-full object-cover"
-        />
-      ) : (
-        "🍽️"
-      )}
-    </div>
+const MenuCard = ({ item, onAddToCart }) => {
+  // Track which option is currently selected — default to the first one
+  // Guard against items with no options (old data, or a bug elsewhere)
+  const [selectedOption, setSelectedOption] = useState(
+    item.options?.[0] || { label: "Regular", price: 0 },
+  );
 
-    {/* Card body */}
-    <div className="p-4">
-      {/* Category badge */}
-      <span className="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full font-medium">
-        {item.category}
-      </span>
+  const hasMultipleOptions = item.options?.length > 1;
 
-      <div className="mt-2 flex justify-between items-start gap-2">
-        <h3 className="font-bold text-gray-800">{item.name}</h3>
-        <span className="text-orange-500 font-bold whitespace-nowrap">
-          GH₵ {item.price}
-        </span>
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+      {/* Image */}
+      <div className="bg-orange-50 h-44 flex items-center justify-center text-6xl overflow-hidden">
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          "🍽️"
+        )}
       </div>
 
-      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-        {item.description}
-      </p>
-
-      {/* Availability badge */}
-      {!item.isAvailable && (
-        <span className="mt-2 inline-block text-xs bg-red-100 text-red-500 px-2 py-1 rounded-full">
-          Currently Unavailable
+      <div className="p-4">
+        <span className="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full font-medium">
+          {item.category}
         </span>
-      )}
 
-      {/* Buttons */}
-      <div className="mt-4 flex gap-2">
-        <button
-          onClick={() => onAddToCart(item)}
-          disabled={!item.isAvailable}
-          className="flex-1 bg-orange-500 text-white py-2 rounded-full text-sm font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ShoppingCart size={15} /> Add to Cart
-        </button>
-        <Link
-          to={`/menu/${item._id}`}
-          className="border border-orange-500 text-orange-500 px-3 py-2 rounded-full text-sm font-semibold hover:bg-orange-50 transition-colors"
-        >
-          View
-        </Link>
+        <div className="mt-2 flex justify-between items-start gap-2">
+          <h3 className="font-bold text-gray-800">{item.name}</h3>
+          <span className="text-orange-500 font-bold whitespace-nowrap">
+            GH₵ {selectedOption.price}
+          </span>
+        </div>
+
+        <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+          {item.description}
+        </p>
+
+        {!item.isAvailable && (
+          <span className="mt-2 inline-block text-xs bg-red-100 text-red-500 px-2 py-1 rounded-full">
+            Currently Unavailable
+          </span>
+        )}
+
+        {/* ── Size dropdown — only show if there's more than one option ── */}
+        {hasMultipleOptions && (
+          <select
+            value={selectedOption.label}
+            onChange={(e) =>
+              setSelectedOption(
+                item.options.find((opt) => opt.label === e.target.value),
+              )
+            }
+            className="mt-3 w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+          >
+            {item.options.map((opt) => (
+              <option key={opt.label} value={opt.label}>
+                {opt.label} — GH₵ {opt.price}
+              </option>
+            ))}
+          </select>
+        )}
+
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => onAddToCart(item, selectedOption)}
+            disabled={!item.isAvailable}
+            className="flex-1 bg-orange-500 text-white py-2 rounded-full text-sm font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ShoppingCart size={15} /> Add to Cart
+          </button>
+          <Link
+            to={`/menu/${item._id}`}
+            className="border border-orange-500 text-orange-500 px-3 py-2 rounded-full text-sm font-semibold hover:bg-orange-50 transition-colors"
+          >
+            View
+          </Link>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ─── Main Menu Page ──────────────────────────────────────
 const MenuPage = () => {
@@ -88,6 +113,8 @@ const MenuPage = () => {
 
   const { addItem } = useCart();
   const { userInfo } = useAuth();
+
+  useTitle("Menu");
 
   // Fetch items whenever the category filter changes
   useEffect(() => {
@@ -108,7 +135,7 @@ const MenuPage = () => {
     fetchItems();
   }, [activeCategory]); // re-runs every time activeCategory changes
 
-  const handleAddToCart = async (item) => {
+  const handleAddToCart = async (item, selectedOption) => {
     if (!userInfo) {
       toast.error("Please login to add items to cart");
       return;
@@ -116,11 +143,12 @@ const MenuPage = () => {
     await addItem({
       menuItem: item._id,
       name: item.name,
-      price: item.price,
+      label: selectedOption.label,
+      price: selectedOption.price,
       image: item.image || "",
       quantity: 1,
     });
-    toast.success(`${item.name} added to cart!`);
+    toast.success(`${item.name} (${selectedOption.label}) added to cart!`);
   };
 
   // Filter items by search query — this happens on the frontend
@@ -129,7 +157,6 @@ const MenuPage = () => {
     item.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  useTitle("Menu");
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ── Page Header ── */}

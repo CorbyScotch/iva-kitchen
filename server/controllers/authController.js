@@ -14,7 +14,7 @@ const generateToken = (id) => {
 const registerUser = async (req, res) => {
   try {
     // 1. Pull the data the user sent us
-    const { name, email, password, phone, role } = req.body;
+    const { name, email, password, phone } = req.body;
 
     // 2. Check if someone already registered with this email
     const existingUser = await User.findOne({ email });
@@ -24,7 +24,7 @@ const registerUser = async (req, res) => {
 
     // 3. Create the new user
     // Note: password gets scrambled automatically by our pre-save hook
-    const user = await User.create({ name, email, password, phone, role });
+    const user = await User.create({ name, email, password, phone });
 
     // 4. Send back the user info + a token
     res.status(201).json({

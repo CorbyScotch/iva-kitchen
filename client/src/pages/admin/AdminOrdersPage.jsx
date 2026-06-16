@@ -80,7 +80,11 @@ const OrderCard = ({ order, onStatusChange }) => {
         {order.items.map((item, i) => (
           <div key={i} className="flex justify-between text-sm py-0.5">
             <span className="text-gray-600">
-              {item.name} x{item.quantity}
+              {item.name}
+              {item.label && item.label !== "Regular"
+                ? ` (${item.label})`
+                : ""}{" "}
+              x{item.quantity}
             </span>
             <span className="font-medium text-gray-800">
               GH₵ {(item.price * item.quantity).toFixed(2)}

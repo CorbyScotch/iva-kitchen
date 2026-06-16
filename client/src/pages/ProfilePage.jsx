@@ -83,6 +83,8 @@ const ProfilePage = () => {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  useTitle("My Profile");
+
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -124,8 +126,6 @@ const ProfilePage = () => {
       setSaving(false);
     }
   };
-
-  useTitle("My Profile");
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">

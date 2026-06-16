@@ -231,7 +231,14 @@ const OrderTrackingPage = () => {
                   <div key={index} className="flex justify-between text-sm">
                     <span className="text-gray-600">
                       {item.name}
-                      <span className="text-gray-400"> x{item.quantity}</span>
+                      <span className="text-gray-400">
+                        {" "}
+                        {item.name}
+                        {item.label && item.label !== "Regular"
+                          ? ` (${item.label})`
+                          : ""}{" "}
+                        x{item.quantity}
+                      </span>
                     </span>
                     <span className="font-semibold text-gray-800">
                       GH₵ {(item.price * item.quantity).toFixed(2)}

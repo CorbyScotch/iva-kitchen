@@ -15,6 +15,7 @@ const cartSchema = new mongoose.Schema(
           ref: "MenuItem",
         },
         name: String,
+        label: String,
         price: Number,
         image: String,
         quantity: {

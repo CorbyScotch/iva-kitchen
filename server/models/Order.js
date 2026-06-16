@@ -14,7 +14,8 @@ const orderSchema = new mongoose.Schema(
           ref: "MenuItem",
         },
         name: String, // store name + price at time of order
-        price: Number, // in case menu price changes later
+        label: String, // label of that one food
+        price: Number, // of the label and in case menu price changes later
         quantity: {
           type: Number,
           required: true,
@@ -59,5 +60,11 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+// Speeds up "get my orders" queries (filtering by user)
+orderSchema.index({ user: 1 });
+
+// Speeds up admin filtering orders by status
+orderSchema.index({ status: 1 });
 
 module.exports = mongoose.model("Order", orderSchema);

@@ -16,29 +16,25 @@ const getCart = async (req, res) => {
 // ─── ADD ITEM TO CART ────────────────────────────────────
 const addToCart = async (req, res) => {
   try {
-    const { menuItem, name, price, image, quantity } = req.body;
+    const { menuItem, name, label, price, image, quantity } = req.body;
 
-    // Find the user's existing cart, or start a fresh one
     let cart = await Cart.findOne({ user: req.user._id });
 
     if (!cart) {
-      // No cart yet — create one with this first item
       cart = new Cart({
         user: req.user._id,
-        items: [{ menuItem, name, price, image, quantity }],
+        items: [{ menuItem, name, label, price, image, quantity }],
       });
     } else {
-      // Cart exists — check if this item is already in it
+      // Check if this EXACT item + size combo already exists in the cart
       const existingItem = cart.items.find(
-        (item) => item.menuItem.toString() === menuItem,
+        (item) => item.menuItem.toString() === menuItem && item.label === label,
       );
 
       if (existingItem) {
-        // Item already in cart — just increase the quantity
         existingItem.quantity += quantity;
       } else {
-        // New item — push it into the cart
-        cart.items.push({ menuItem, name, price, image, quantity });
+        cart.items.push({ menuItem, name, label, price, image, quantity });
       }
     }
 

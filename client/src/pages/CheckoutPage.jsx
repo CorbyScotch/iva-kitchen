@@ -13,6 +13,8 @@ const CheckoutPage = () => {
   const { userInfo } = useAuth();
   const navigate = useNavigate();
 
+  useTitle("Checkout");
+
   const [formData, setFormData] = useState({
     deliveryAddress: "",
     phone: userInfo?.phone || "", // pre-fill with their registered phone
@@ -111,7 +113,6 @@ const CheckoutPage = () => {
   // ── Empty cart guard ───────────────────────────────────
   if (cartItems.length === 0) return <Navigate to="/cart" replace />;
 
-  useTitle("Checkout");
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-4xl mx-auto px-4">
@@ -219,7 +220,11 @@ const CheckoutPage = () => {
                 {cartItems.map((item) => (
                   <div key={item._id} className="flex justify-between text-sm">
                     <span className="text-gray-600 truncate mr-2">
-                      {item.name} x{item.quantity}
+                      {item.name}
+                      {item.label && item.label !== "Regular"
+                        ? ` (${item.label})`
+                        : ""}{" "}
+                      x{item.quantity}
                     </span>
                     <span className="font-semibold text-gray-800 whitespace-nowrap">
                       GH₵ {(item.price * item.quantity).toFixed(2)}

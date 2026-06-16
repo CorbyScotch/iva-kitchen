@@ -15,6 +15,8 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  useTitle("Login");
+
   // redirect already-logged-in users away from login page
   if (userInfo) return <Navigate to="/" replace />;
 
@@ -49,8 +51,6 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
-
-  useTitle("Login");
 
   return (
     <div className="min-h-screen bg-orange-50 flex items-center justify-center px-4 py-12">

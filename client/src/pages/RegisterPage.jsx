@@ -20,6 +20,8 @@ const RegisterPage = () => {
   const { login: saveUser, userInfo } = useAuth();
   const navigate = useNavigate();
 
+  useTitle("Create Account");
+
   // redirect already-logged-in users away from register page
   if (userInfo) return <Navigate to="/" replace />;
 
@@ -67,8 +69,6 @@ const RegisterPage = () => {
       setLoading(false);
     }
   };
-
-  useTitle("Create Account");
 
   return (
     <div className="min-h-screen bg-orange-50 flex items-center justify-center px-4 py-12">

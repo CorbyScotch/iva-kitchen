@@ -84,9 +84,10 @@ const FeaturedDishes = () => {
       }
     };
     fetchFeatured();
-  }, []); // empty array means "run once when the component loads"
+  }, []);
 
-  const handleAddToCart = async (item) => {
+  // UPDATED — now takes the selected option too
+  const handleAddToCart = async (item, selectedOption) => {
     if (!userInfo) {
       toast.error("Please login to add items to cart");
       return;
@@ -94,17 +95,17 @@ const FeaturedDishes = () => {
     await addItem({
       menuItem: item._id,
       name: item.name,
-      price: item.price,
+      label: selectedOption.label,
+      price: selectedOption.price,
       image: item.image || "",
       quantity: 1,
     });
-    toast.success(`${item.name} added to cart!`);
+    toast.success(`${item.name} (${selectedOption.label}) added to cart!`);
   };
 
   return (
     <section className="py-16 bg-white">
       <div className="max-w-6xl mx-auto px-4">
-        {/* Section header */}
         <div className="text-center mb-10">
           <h2 className="text-3xl font-extrabold text-gray-900">
             Featured <span className="text-orange-500">Dishes</span>
@@ -114,7 +115,6 @@ const FeaturedDishes = () => {
           </p>
         </div>
 
-        {/* Loading state */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((n) => (
@@ -129,58 +129,15 @@ const FeaturedDishes = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item) => (
-              <div
+              <FeaturedCard
                 key={item._id}
-                className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-              >
-                {/* Food image or placeholder */}
-                <div className="bg-orange-50 h-44 flex items-center justify-center text-6xl">
-                  {item.image ? (
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    "🍽️"
-                  )}
-                </div>
-
-                {/* Card body */}
-                <div className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-bold text-gray-800">{item.name}</h3>
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                        {item.description}
-                      </p>
-                    </div>
-                    <span className="text-orange-500 font-bold text-sm ml-2 whitespace-nowrap">
-                      GH₵ {item.price}
-                    </span>
-                  </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <button
-                      onClick={() => handleAddToCart(item)}
-                      className="flex-1 bg-orange-500 text-white py-2 rounded-full text-sm font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <ShoppingCart size={15} /> Add to Cart
-                    </button>
-                    <Link
-                      to={`/menu/${item._id}`}
-                      className="border border-orange-500 text-orange-500 px-3 py-2 rounded-full text-sm font-semibold hover:bg-orange-50 transition-colors"
-                    >
-                      View
-                    </Link>
-                  </div>
-                </div>
-              </div>
+                item={item}
+                onAddToCart={handleAddToCart}
+              />
             ))}
           </div>
         )}
 
-        {/* See full menu button */}
         <div className="text-center mt-10">
           <Link
             to="/menu"
@@ -191,6 +148,78 @@ const FeaturedDishes = () => {
         </div>
       </div>
     </section>
+  );
+};
+
+// NEW — separate card component so we can hold each item's own selectedOption state
+// (Same reason MenuCard needed its own component instead of being inline)
+const FeaturedCard = ({ item, onAddToCart }) => {
+  const [selectedOption, setSelectedOption] = useState(
+    item.options?.[0] || { label: "Regular", price: 0 },
+  );
+  const hasMultipleOptions = item.options?.length > 1;
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+      <div className="bg-orange-50 h-44 flex items-center justify-center text-6xl">
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          "🍽️"
+        )}
+      </div>
+
+      <div className="p-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="font-bold text-gray-800">{item.name}</h3>
+            <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+              {item.description}
+            </p>
+          </div>
+          <span className="text-orange-500 font-bold text-sm ml-2 whitespace-nowrap">
+            GH₵ {selectedOption.price}
+          </span>
+        </div>
+
+        {hasMultipleOptions && (
+          <select
+            value={selectedOption.label}
+            onChange={(e) =>
+              setSelectedOption(
+                item.options.find((opt) => opt.label === e.target.value),
+              )
+            }
+            className="mt-3 w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+          >
+            {item.options.map((opt) => (
+              <option key={opt.label} value={opt.label}>
+                {opt.label} — GH₵ {opt.price}
+              </option>
+            ))}
+          </select>
+        )}
+
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => onAddToCart(item, selectedOption)}
+            className="flex-1 bg-orange-500 text-white py-2 rounded-full text-sm font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-1"
+          >
+            <ShoppingCart size={15} /> Add to Cart
+          </button>
+          <Link
+            to={`/menu/${item._id}`}
+            className="border border-orange-500 text-orange-500 px-3 py-2 rounded-full text-sm font-semibold hover:bg-orange-50 transition-colors"
+          >
+            View
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 };
 

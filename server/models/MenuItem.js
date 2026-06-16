@@ -11,13 +11,22 @@ const menuItemSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    price: {
-      type: Number,
-      required: true,
-    },
+    // Instead of a single price, we now have an array of size/price options
+    options: [
+      {
+        label: {
+          type: String,
+          required: true,
+          trim: true, // e.g. "Small", "Regular", "Family Size"
+        },
+        price: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
     category: {
       type: String,
-      // A Ghanaian restaurant menu — feel free to add more!
       enum: [
         "Local Dishes",
         "Grills",
@@ -29,20 +38,22 @@ const menuItemSchema = new mongoose.Schema(
       required: true,
     },
     image: {
-      type: String, // We'll store the image URL from Cloudinary here
+      type: String,
     },
     isAvailable: {
       type: Boolean,
-      default: true, // Items are available by default
+      default: true,
     },
     isFeatured: {
       type: Boolean,
-      default: false, // Featured items show on the homepage
+      default: false,
     },
   },
   {
     timestamps: true,
   },
 );
+
+menuItemSchema.index({ category: 1 });
 
 module.exports = mongoose.model("MenuItem", menuItemSchema);

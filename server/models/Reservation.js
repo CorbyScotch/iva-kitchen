@@ -43,4 +43,7 @@ const reservationSchema = new mongoose.Schema(
   },
 );
 
+reservationSchema.index({ user: 1 });
+reservationSchema.index({ date: 1 });
+
 module.exports = mongoose.model("Reservation", reservationSchema);
