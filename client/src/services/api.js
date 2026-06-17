@@ -6,7 +6,6 @@ const API = axios.create({
 });
 
 // Before every request, automatically attach the token if the user is logged in
-// This is like the waiter automatically showing their staff badge before entering the kitchen
 API.interceptors.request.use((config) => {
   const userInfo = localStorage.getItem("userInfo");
   if (userInfo) {

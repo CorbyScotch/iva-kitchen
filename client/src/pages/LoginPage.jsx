@@ -110,6 +110,16 @@ const LoginPage = () => {
             </div>
           </div>
 
+          {/* Reset Password Button */}
+          <div className="text-right">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-orange-500 hover:underline font-medium"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
           {/* Submit button */}
           <button
             type="submit"

@@ -16,6 +16,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminMenuPage from "./pages/admin/AdminMenuPage";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminReservationsPage from "./pages/admin/AdminReservationsPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 // Components
 import Navbar from "./components/Navbar";
@@ -45,6 +47,11 @@ const App = () => {
           <Route path="/menu/:id" element={<MenuItemPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route
+            path="/reset-password/:token"
+            element={<ResetPasswordPage />}
+          />
 
           {/* Protected routes — must be logged in */}
           <Route

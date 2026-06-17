@@ -5,7 +5,8 @@ import {
   updateMenuItem,
   deleteMenuItem,
 } from "../../services/menuService";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Upload, Loader2 } from "lucide-react";
+import { uploadImage } from "../../services/uploadService";
 import toast from "react-hot-toast";
 
 const CATEGORIES = [
@@ -34,6 +35,7 @@ const MenuItemForm = ({ initial, onSave, onCancel }) => {
         },
   );
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false); // cloudinary
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -64,6 +66,29 @@ const MenuItemForm = ({ initial, onSave, onCancel }) => {
     }
     const updatedOptions = formData.options.filter((_, i) => i !== index);
     setFormData({ ...formData, options: updatedOptions });
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]; // grabs the selected file
+    if (!file) return;
+
+    // Basic size check — reject anything over 5MB before even trying to upload
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be smaller than 5MB");
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const { data } = await uploadImage(file);
+      // Save the returned Cloudinary URL into our form state
+      setFormData({ ...formData, image: data.imageUrl });
+      toast.success("Image uploaded!");
+    } catch (err) {
+      toast.error("Image upload failed");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -139,19 +164,53 @@ const MenuItemForm = ({ initial, onSave, onCancel }) => {
       </div>
 
       {/* Image URL */}
+      {/* Image Upload */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Image URL{" "}
-          <span className="text-gray-400 font-normal">(optional)</span>
+          Food Photo
         </label>
-        <input
-          type="text"
-          name="image"
-          value={formData.image}
-          onChange={handleChange}
-          placeholder="https://..."
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 text-sm"
-        />
+
+        {/* Show preview if an image already exists */}
+        {formData.image && (
+          <div className="mb-3 relative w-32 h-32">
+            <img
+              src={formData.image}
+              alt="Preview"
+              className="w-full h-full object-cover rounded-xl"
+            />
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, image: "" })}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
+        {/* File picker */}
+        <label className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-xl py-4 cursor-pointer hover:border-orange-400 transition-colors">
+          {uploading ? (
+            <>
+              <Loader2 size={18} className="text-orange-500 animate-spin" />
+              <span className="text-sm text-gray-500">Uploading...</span>
+            </>
+          ) : (
+            <>
+              <Upload size={18} className="text-gray-400" />
+              <span className="text-sm text-gray-500">
+                {formData.image ? "Change photo" : "Click to upload a photo"}
+              </span>
+            </>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            disabled={uploading}
+            className="hidden" // we hide the ugly default file input and style our own
+          />
+        </label>
       </div>
 
       {/* Description */}
