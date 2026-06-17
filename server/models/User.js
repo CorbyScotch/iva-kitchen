@@ -29,6 +29,12 @@ const userSchema = new mongoose.Schema(
       enum: ["customer", "admin"], // role can ONLY be one of these two
       default: "customer", // new users are customers by default
     },
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpires: {
+      type: Date,
+    },
   },
   {
     timestamps: true, // automatically adds createdAt and updatedAt fields
