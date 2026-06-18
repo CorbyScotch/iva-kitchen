@@ -13,6 +13,8 @@ Sentry.init({
 });
 
 const app = express();
+// trust Render's proxy so rate limiting sees real visitor IPs, not proxy's IP
+app.set("trust proxy", 1);
 
 app.use(
   cors({
