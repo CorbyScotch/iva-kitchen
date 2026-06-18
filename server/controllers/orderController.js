@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
+const axios = require("axios");
 
 // ─── CREATE ORDER ────────────────────────────────────────
 const createOrder = async (req, res) => {
@@ -90,7 +91,7 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-// ─── UPDATE PAYMENT STATUS ───────────────────────────────
+// ─── UPDATE PAYMENT STATUS (verified server-side) ───────
 const updatePaymentStatus = async (req, res) => {
   try {
     const { paystackReference } = req.body;
@@ -100,12 +101,43 @@ const updatePaymentStatus = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
+    // Ask Paystack directly — don't trust the frontend's claim
+    const verifyRes = await axios.get(
+      `https://api.paystack.co/transaction/verify/${paystackReference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        },
+      },
+    );
+
+    const paymentData = verifyRes.data.data;
+
+    // Must actually say "success"
+    if (paymentData.status !== "success") {
+      return res.status(400).json({ message: "Payment verification failed" });
+    }
+
+    // Must match the amount we expected — prevents underpayment tampering
+    const expectedAmount = Math.round(order.totalAmount * 100);
+    if (paymentData.amount !== expectedAmount) {
+      return res.status(400).json({ message: "Payment amount mismatch" });
+    }
+
+    // Prevent marking the same order as paid twice (e.g. accidental double calls)
+    if (order.paymentStatus === "Paid") {
+      return res.json(order); // already paid, just return it as-is
+    }
+
     order.paymentStatus = "Paid";
     order.paystackReference = paystackReference;
     await order.save();
+
     res.json(order);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Payment verification error", error: err.message });
   }
 };
 

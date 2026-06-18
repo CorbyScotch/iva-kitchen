@@ -5,8 +5,9 @@ const {
   loginUser,
   getProfile,
   updateProfile,
+  promoteToAdmin,
 } = require("../controllers/authController");
-const { protect } = require("../middleware/authMiddleware");
+const { protect, adminOnly } = require("../middleware/authMiddleware");
 
 // POST /api/auth/register
 router.post("/register", registerUser);
@@ -18,5 +19,8 @@ router.post("/login", loginUser);
 router.get("/profile", protect, getProfile);
 
 router.put("/profile", protect, updateProfile);
+
+// promote to Admin
+router.put("/promote", protect, adminOnly, promoteToAdmin);
 
 module.exports = router;

@@ -104,4 +104,29 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser, getProfile, updateProfile };
+// ─── PROMOTE USER TO ADMIN (admin only) ──────────────────
+const promoteToAdmin = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.role = "admin";
+    await user.save();
+
+    res.json({ message: `${user.name} is now an admin` });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getProfile,
+  updateProfile,
+  promoteToAdmin,
+};
